@@ -7,7 +7,12 @@ that you can use to serialize any of your classes.
 
 The class schema is a YAML file, that describes which 
 attributes to encode and how. It is a very flexible way
-of writing structured data.
+of writing structured information.
+
+### Example
+
+See how to create the schema and how to conform your classes to `Encodable` in the 
+example folder.
 
 ### Install
 

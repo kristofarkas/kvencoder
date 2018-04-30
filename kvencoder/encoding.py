@@ -2,21 +2,14 @@ import yaml
 from functools import reduce
 from abc import ABCMeta, abstractmethod
 
-_encoders = {'yes_no': lambda x: ('no', 'yes')[x],
-             'on_off': lambda x: ('off', 'on')[x],
-             'enum': lambda x: x.value,
-             'iter': lambda x: ' '.join(str(xs) for xs in x),
-             'two_digit_iter': lambda xs: ' '.join(f'{x:.2f}'for x in xs)
-             }
-
-
 _column_size = 25
 
 
 class Encodable(metaclass=ABCMeta):
 
+    @property
     @abstractmethod
-    def _get_schema(self):
+    def _schema(self):
         """Return the path to the YAML file containing the schema for this class
 
         Returns
@@ -26,9 +19,9 @@ class Encodable(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    @abstractmethod
     @property
-    def _encoder(self):
+    @abstractmethod
+    def _encoders(self):
         """ Dictionary of custom encoding functions
 
         The keys are names used in the schema, values are functions taking one arguments
@@ -37,6 +30,7 @@ class Encodable(metaclass=ABCMeta):
         Returns
         -------
         dict
+            Encoders to be used.
         """
 
     def encode(self, path=None, suffix=None):
@@ -60,7 +54,7 @@ class Encodable(metaclass=ABCMeta):
 
         def update(d: dict, other: dict) -> dict: d.update(other); return d
 
-        attributes = reduce(update, (yaml.load(open(self._get_schema()))
+        attributes = reduce(update, (yaml.load(open(self._schema))
                                      for class_names in (self.__class__, *self.__class__.__bases__) if
                                      (issubclass(class_names, Encodable)) and class_names is not Encodable), {})
 
@@ -98,7 +92,7 @@ class Encodable(metaclass=ABCMeta):
             if isinstance(value, Encodable):
                 serial += value.encode()
             elif value is not None:
-                serial += self._format_line(external_name, value if len(internals) == 1 else _encoders[internals[1]](value))
+                serial += self._format_line(external_name, value if len(internals) == 1 else self._encoders[internals[1]](value))
 
         return serial + '\n'
 
